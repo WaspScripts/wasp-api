@@ -9,9 +9,9 @@ export { rateLimit } from "elysia-rate-limit"
 
 console.log(`🔥 wasp-api is starting...`)
 
-const app = new Elysia()
+const app = new Elysia().state("user", "")
 
-app.onRequest(async ({ request, status }) => {
+app.onRequest(async ({ store, request, status }) => {
 	const url = new URL(request.url)
 	const path = url.pathname
 	if (path === "/docs" || path === "/docs/" || path === "/docs/json" || path === "/docs/json/") {
@@ -49,6 +49,8 @@ app.onRequest(async ({ request, status }) => {
 	if (!user || !session) {
 		return status(401, "Invalid Session.")
 	}
+
+	store.user = user.id
 })
 
 app.onAfterResponse((response) => {

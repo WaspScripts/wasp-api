@@ -1,35 +1,12 @@
 import { t } from "$src/index"
 import { Static } from "elysia"
+import { Database } from "./supabase"
 
-export interface Script {
-	id: string
-	title: string
-	protected: {
-		revision: number
-		username: string
-	}
-}
-
-export interface Limit {
-	xp_min: number
-	xp_max: number
-	gp_min: number
-	gp_max: number
-}
-
-export interface ProfileRoles {
-	id: string
-	roles: {
-		administrator: boolean
-		banned: boolean
-		developer: boolean
-		moderator: boolean
-		premium: boolean
-		scripter: boolean
-		tester: boolean
-		timeout: boolean
-		vip: boolean
-	}
+export interface Limits {
+	xp_min: Database["scripts"]["Tables"]["stats_limits"]["Row"]["xp_min"]
+	xp_max: Database["scripts"]["Tables"]["stats_limits"]["Row"]["xp_max"]
+	gp_min: Database["scripts"]["Tables"]["stats_limits"]["Row"]["gp_min"]
+	gp_max: Database["scripts"]["Tables"]["stats_limits"]["Row"]["gp_max"]
 }
 
 export const StatsSchema = t.Object({
@@ -40,25 +17,14 @@ export const StatsSchema = t.Object({
 
 export type StatsPayload = Static<typeof StatsSchema>
 
-export interface OnlineUsers {
-	id: string
-	time: number
-}
-
 export interface ScriptStats {
 	id: string
-	user_id: string
 	experience: number
 	gold: number
 	runtime: number
 }
 
-export interface CachedScript {
-	script: Script
-	timestamp: number
-}
-
-export interface CachedLimit {
-	limit: Limit
+export interface CachedLimits {
+	limit: Limits
 	timestamp: number
 }

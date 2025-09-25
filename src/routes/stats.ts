@@ -34,9 +34,12 @@ export default (app: ElysiaApp) =>
 
 		.post(
 			":id",
-			async ({ params: { id }, body }) => {
-				await upsertStats(id, body)
+			async ({ store, params: { id }, body, status }) => {
+				const { error } = await upsertStats(id, store.user, body)
 
+				if (error != null) {
+					return status(400, error)
+				}
 				return "User and script stats were successfully updated!"
 			},
 			{

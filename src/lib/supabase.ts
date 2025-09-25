@@ -1,21 +1,170 @@
 import { createClient } from "@supabase/supabase-js"
-import { Database, Json } from "./types/supabase"
-import {
-	CachedLimit,
-	CachedScript,
-	OnlineUsers,
-	Script,
-	ScriptStats,
-	StatsPayload
-} from "./types/collection"
+import { Database } from "./types/supabase"
+import { CachedLimits, StatsPayload } from "./types/collection"
 
 export const CACHE_TIMEOUT = 2 * 60 * 1000
 
-export const supabase = createClient<Database>(process.env.URL, process.env.ANON_KEY, {
-	auth: { autoRefreshToken: false, persistSession: false }
-})
+export const supabase = createClient<Database>(process.env.URL, process.env.ANON_KEY)
 
-const scripts: Map<string, CachedScript> = new Map()
-const limits: Map<string, CachedLimit> = new Map()
+const supabaseAdmin = createClient<Database>(process.env.URL, process.env.SERVICE_KEY)
 
-export async function upsertStats(id: string, statsPayload: StatsPayload) {}
+const limits: Map<string, CachedLimits> = new Map()
+
+async function getAccess(id: string) {
+	const { data, error: err } = await supabase
+		.schema("profiles")
+		.rpc("can_access", { script_id: id })
+
+	if (err) {
+		return {
+			error: `PostgrestError Code: ${err.code} Name: ${err.name} Status: ${err.hint} Details: ${err.details} Message: ${err.message}`
+		}
+	}
+
+	if (!data) {
+		return {
+			error: "You do not have access to this script. Please consider supporting their creators."
+		}
+	}
+	return { error: null }
+}
+
+async function getLimits(id: string) {
+	const now = Date.now()
+	const cached = limits.get(id)
+	if (cached && now - cached.timestamp < CACHE_TIMEOUT) {
+		return { limits: cached.limit, error: null }
+	}
+
+	const { data, error } = await supabase
+		.schema("scripts")
+		.from("stats_limits")
+		.select("xp_min, xp_max, gp_min, gp_max")
+		.eq("id", id)
+		.single()
+
+	if (error) {
+		console.error(error)
+		return {
+			limits: null,
+			error: `AuthError Code: ${error.code} Name: ${error.name} Status: ${error.hint} Details: ${error.details} Message: ${error.message}`
+		}
+	}
+
+	return { limits: data, error: null }
+}
+
+async function updateScriptStats(id: string, payload: StatsPayload) {
+	const { data, error } = await supabase
+		.schema("stats")
+		.from("simba")
+		.select("experience, gold, runtime")
+		.eq("id", id)
+		.single()
+
+	if (error) {
+		console.error(error)
+		return {
+			error: `PostgrestError Code: ${error.code} Name: ${error.name} Status: ${error.hint} Details: ${error.details} Message: ${error.message}`
+		}
+	}
+
+	data.experience += payload.experience
+	data.gold += payload.gold
+	data.runtime += payload.runtime
+
+	const { error: err } = await supabaseAdmin.schema("stats").from("simba").update(data).eq("id", id)
+
+	if (err) {
+		console.error(err)
+		return {
+			error: `PostgrestError Code: ${err.code} Name: ${err.name} Status: ${err.hint} Details: ${err.details} Message: ${err.message}`
+		}
+	}
+	return { error: null }
+}
+
+async function upsertUserStats(user_id: string, payload: StatsPayload) {
+	const { data, error } = await supabase
+		.schema("stats")
+		.from("stats")
+		.select("experience, gold, runtime")
+		.eq("id", user_id)
+		.maybeSingle()
+
+	if (error) {
+		console.error(error)
+		return {
+			error: `PostgrestError Code: ${error.code} Name: ${error.name} Status: ${error.hint} Details: ${error.details} Message: ${error.message}`
+		}
+	}
+
+	const { error: err } = await supabaseAdmin
+		.schema("stats")
+		.from("stats")
+		.upsert({
+			id: user_id,
+			experience: payload.experience + (data?.experience ?? 0),
+			gold: payload.gold + (data?.gold ?? 0),
+			runtime: payload.runtime + (data?.runtime ?? 0)
+		})
+
+	if (err) {
+		console.error(err)
+		return {
+			error: `PostgrestError Code: ${err.code} Name: ${err.name} Status: ${err.hint} Details: ${err.details} Message: ${err.message}`
+		}
+	}
+	return { error: null }
+}
+
+export async function upsertStats(id: string, user_id: string, payload: StatsPayload) {
+	const promises = await Promise.all([getAccess(id), getLimits(id)])
+	const { error: err } = promises[0]
+	if (err != null) return { error: err }
+
+	const { limits, error } = promises[1]
+	if (error != null) return { error }
+
+	const scriptPresence = supabase.channel(id, {
+		config: { presence: { key: user_id, enabled: true } }
+	})
+
+	scriptPresence.subscribe()
+
+	if (payload.experience < limits.xp_min) {
+		return { error: "Reported experience is less than the script aproved limits!" }
+	}
+
+	if (payload.experience > limits.xp_max) {
+		return { error: "Reported experience is more than the script aproved limits!" }
+	}
+
+	if (payload.gold < limits.gp_min) {
+		return { error: "Reported gold is less than the script aproved limits!" }
+	}
+
+	if (payload.gold > limits.gp_max) {
+		return { error: "Reported gold is more than the script aproved limits!" }
+	}
+
+	if (payload.runtime === 0) payload.runtime = 5000
+	if (payload.runtime < 1000 || payload.runtime > 15 * 60 * 1000) {
+		return { error: "Reported runtime is not within the aproved limits!" }
+	}
+
+	if (payload.experience === 0 && payload.gold === 0) {
+		return { error: "No experience nor gold was reported!" }
+	}
+
+	const submissions = await Promise.all([
+		updateScriptStats(id, payload),
+		upsertUserStats(user_id, payload),
+		scriptPresence.unsubscribe()
+	])
+
+	if (submissions[0].error) return { error: submissions[0].error }
+	if (submissions[1].error) return { error: submissions[1].error }
+
+	return { error: null }
+}
