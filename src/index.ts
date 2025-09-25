@@ -3,6 +3,7 @@ import { swagger } from "@elysiajs/swagger"
 import { serverTiming } from "@elysiajs/server-timing"
 import { autoroutes } from "elysia-autoroutes"
 import { ip } from "elysia-ip"
+import { supabase } from "./lib/supabase"
 export { t } from "elysia"
 export { rateLimit } from "elysia-rate-limit"
 
@@ -10,29 +11,59 @@ console.log(`🔥 wasp-api is starting...`)
 
 const app = new Elysia()
 
-app.onResponse((response) => {
+app.onRequest(async ({ request, status }) => {
+	const url = new URL(request.url)
+	const path = url.pathname
+	if (path === "/docs" || path === "/docs/" || path === "/docs/json" || path === "/docs/json/") {
+		return
+	}
+
+	const apiKey = request.headers.get("apikey")
+	if (apiKey !== process.env.ANON_KEY) {
+		return status(401, "Invalid API key")
+	}
+
+	const authorization = request.headers.get("Authorization")
+	if (!authorization) {
+		return status(401, "Authorization header is missing.")
+	}
+
+	const refresh_token = request.headers.get("RefreshToken")
+	if (!refresh_token) {
+		return status(401, "RefreshToken header is missing.")
+	}
+
+	const access_token = authorization.split("Bearer ")[1]
+
 	const {
-		request,
-		path,
-		set: { status }
-	} = response
+		data: { user, session },
+		error: err
+	} = await supabase.auth.setSession({ access_token, refresh_token })
+	if (err) {
+		return status(
+			401,
+			`AuthError Code: ${err.code} Name: ${err.name} Status: ${err.status} Message: ${err.message}`
+		)
+	}
+
+	if (!user || !session) {
+		return status(401, "Invalid Session.")
+	}
+})
+
+app.onAfterResponse((response) => {
+	const { request, path, set } = response
 	if (path === "/docs" || path === "/docs/" || path === "/docs/json" || path === "/docs/json/")
 		return
+
+	response.headers["RefreshToken"] = "HELLO WORLD!"
+
 	const ip = request.headers.get("cf-connecting-ip")
 	const userAgent = request.headers.get("user-agent")
 	const timestamp = new Date().toISOString().replace("T", " ").replace("Z", "")
 
-	let icon = "💯"
-	if (status) {
-		const n = status as number
-		if (n > 200 && n < 300) icon = "✅"
-		else if (n >= 300 && n < 400) icon = "💨"
-		else if (n >= 400 && n < 500) icon = "⚠️"
-		else if (n >= 500) icon = "❌"
-	}
-
 	console.log(
-		`[${timestamp}]: [${icon} ${status}] ${userAgent} ${ip + " " ?? ""}- ${request.method} ${path}`
+		`[${timestamp}]: [${set.status}] ${userAgent} ${ip ?? "NO_IP" + " "}- ${request.method} ${path}`
 	)
 })
 
