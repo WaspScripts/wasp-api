@@ -83,9 +83,9 @@ app.use(
 				contact: {
 					email: "support@waspscripts.com",
 					name: "Torwent",
-					url: "https://waspscripts.com"
+					url: "https://waspscripts.dev"
 				},
-				license: { name: "GPLv3", url: "https://github.com/Torwent/wasp-api/LICENSE" }
+				license: { name: "GPLv3", url: "https://github.com/WaspScripts/wasp-api/LICENSE" }
 			}
 		},
 		scalarConfig: { spec: { url: "/docs/json" } },
