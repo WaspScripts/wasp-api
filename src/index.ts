@@ -9,7 +9,7 @@ export { rateLimit } from "elysia-rate-limit"
 
 console.log(`🔥 wasp-api is starting...`)
 
-const app = new Elysia().state("user", "")
+const app = new Elysia().state("user", "").state("email", "")
 
 app.onRequest(async ({ store, request, status }) => {
 	const url = new URL(request.url)
@@ -50,15 +50,18 @@ app.onRequest(async ({ store, request, status }) => {
 		return status(401, "Invalid Session.")
 	}
 
+	if (!user.email) {
+		return status(401, "Your account needs an email tied to your account to submit stats")
+	}
+
 	store.user = user.id
+	store.email = user.email
 })
 
 app.onAfterResponse((response) => {
 	const { request, path, set } = response
 	if (path === "/docs" || path === "/docs/" || path === "/docs/json" || path === "/docs/json/")
 		return
-
-	response.headers["RefreshToken"] = "HELLO WORLD!"
 
 	const ip = request.headers.get("cf-connecting-ip")
 	const userAgent = request.headers.get("user-agent")

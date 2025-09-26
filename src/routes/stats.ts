@@ -18,18 +18,10 @@ export default (app: ElysiaApp) =>
 				scoping: "scoped",
 				duration: 3 * 60 * 1000,
 				max: 3,
-				errorResponse: "You've reached the 100 requests/min limit.",
+				errorResponse: "You've reached the 3 requests/min limit.",
 				generator: async (req, server, { ip }) => Bun.hash(JSON.stringify(ip)).toString(),
 				injectServer: () => app.server
 			})
-		)
-
-		.get(
-			":id",
-			async ({ status, params: { id } }) => {
-				return "Done."
-			},
-			{ params: uuid }
 		)
 
 		.post(
@@ -37,9 +29,10 @@ export default (app: ElysiaApp) =>
 			async ({ store, params: { id }, body, status }) => {
 				const { error } = await upsertStats(id, store.user, body)
 
-				if (error != null) {
+				if (error) {
 					return status(400, error)
 				}
+
 				return "User and script stats were successfully updated!"
 			},
 			{

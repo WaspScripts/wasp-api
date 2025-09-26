@@ -1,14 +1,51 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient, SupabaseClient } from "@supabase/supabase-js"
 import { Database } from "./types/supabase"
 import { CachedLimits, StatsPayload } from "./types/collection"
 
 export const CACHE_TIMEOUT = 2 * 60 * 1000
 
 export const supabase = createClient<Database>(process.env.URL, process.env.ANON_KEY)
-
 const supabaseAdmin = createClient<Database>(process.env.URL, process.env.SERVICE_KEY)
 
 const limits: Map<string, CachedLimits> = new Map()
+
+export async function createSession(email: string) {
+	const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+		type: "magiclink",
+		email: email
+	})
+	if (error) {
+		console.error("AuthAdminError: " + JSON.stringify(error))
+		return {
+			session: null,
+			error: `AuthAdminError Code: ${error.code} Name: ${error.name} Status: ${error.status} Message: ${error.message}`
+		}
+	}
+
+	const {
+		data: { session },
+		error: err
+	} = await supabase.auth.verifyOtp({
+		token_hash: data.properties.hashed_token,
+		type: "magiclink"
+	})
+
+	if (err) {
+		console.error("AuthError: " + JSON.stringify(err))
+		return {
+			session: null,
+			error: `AuthError Code: ${err.code} Name: ${err.name} Status: ${err.status} Message: ${err.message}`
+		}
+	}
+	if (!session) {
+		return {
+			session: null,
+			error: `AuthError Session was not created.`
+		}
+	}
+
+	return { session, error: null }
+}
 
 async function getAccess(id: string) {
 	const { data, error: err } = await supabase
@@ -47,7 +84,7 @@ async function getLimits(id: string) {
 		console.error(error)
 		return {
 			limits: null,
-			error: `AuthError Code: ${error.code} Name: ${error.name} Status: ${error.hint} Details: ${error.details} Message: ${error.message}`
+			error: `PostgrestError Code: ${error.code} Name: ${error.name} Status: ${error.hint} Details: ${error.details} Message: ${error.message}`
 		}
 	}
 
