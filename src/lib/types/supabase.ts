@@ -546,37 +546,6 @@ export type Database = {
         }
         Relationships: []
       }
-      stats_limits: {
-        Row: {
-          gp_max: number
-          gp_min: number
-          id: string
-          xp_max: number
-          xp_min: number
-        }
-        Insert: {
-          gp_max?: number
-          gp_min?: number
-          id: string
-          xp_max?: number
-          xp_min?: number
-        }
-        Update: {
-          gp_max?: number
-          gp_min?: number
-          id?: string
-          xp_max?: number
-          xp_min?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stats_limits_id_fkey"
-            columns: ["id"]
-            referencedRelation: "scripts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       versions: {
         Row: {
           id: string
@@ -691,7 +660,79 @@ export type Database = {
   }
   stats: {
     Tables: {
-      simba: {
+      limits: {
+        Row: {
+          gp_max: number
+          gp_min: number
+          id: string
+          xp_max: number
+          xp_min: number
+        }
+        Insert: {
+          gp_max?: number
+          gp_min?: number
+          id: string
+          xp_max?: number
+          xp_min?: number
+        }
+        Update: {
+          gp_max?: number
+          gp_min?: number
+          id?: string
+          xp_max?: number
+          xp_min?: number
+        }
+        Relationships: []
+      }
+      limits_custom: {
+        Row: {
+          id: string
+          maxima: number[]
+          minima: number[]
+          trackers: string[]
+        }
+        Insert: {
+          id: string
+          maxima?: number[]
+          minima?: number[]
+          trackers?: string[]
+        }
+        Update: {
+          id?: string
+          maxima?: number[]
+          minima?: number[]
+          trackers?: string[]
+        }
+        Relationships: []
+      }
+      stats: {
+        Row: {
+          experience: number
+          gold: number
+          id: string
+          levels: number
+          runtime: number
+          username: string
+        }
+        Insert: {
+          experience?: number
+          gold?: number
+          id?: string
+          levels?: number
+          runtime?: number
+          username?: string
+        }
+        Update: {
+          experience?: number
+          gold?: number
+          id?: string
+          levels?: number
+          runtime?: number
+          username?: string
+        }
+        Relationships: []
+      }
+      values: {
         Row: {
           experience: number
           gold: number
@@ -715,30 +756,18 @@ export type Database = {
         }
         Relationships: []
       }
-      stats: {
+      values_custom: {
         Row: {
-          experience: number
-          gold: number
           id: string
-          levels: number
-          runtime: number
-          username: string | null
+          values: number[]
         }
         Insert: {
-          experience?: number
-          gold?: number
-          id?: string
-          levels?: number
-          runtime?: number
-          username?: string | null
+          id: string
+          values?: number[]
         }
         Update: {
-          experience?: number
-          gold?: number
           id?: string
-          levels?: number
-          runtime?: number
-          username?: string | null
+          values?: number[]
         }
         Relationships: []
       }

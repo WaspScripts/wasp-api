@@ -3,10 +3,10 @@ import { Static } from "elysia"
 import { Database } from "./supabase"
 
 export interface Limits {
-	xp_min: Database["scripts"]["Tables"]["stats_limits"]["Row"]["xp_min"]
-	xp_max: Database["scripts"]["Tables"]["stats_limits"]["Row"]["xp_max"]
-	gp_min: Database["scripts"]["Tables"]["stats_limits"]["Row"]["gp_min"]
-	gp_max: Database["scripts"]["Tables"]["stats_limits"]["Row"]["gp_max"]
+	xp_min: Database["stats"]["Tables"]["limits"]["Row"]["xp_min"]
+	xp_max: Database["stats"]["Tables"]["limits"]["Row"]["xp_max"]
+	gp_min: Database["stats"]["Tables"]["limits"]["Row"]["gp_min"]
+	gp_max: Database["stats"]["Tables"]["limits"]["Row"]["gp_max"]
 }
 
 export const StatsSchema = t.Object({

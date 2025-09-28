@@ -74,8 +74,8 @@ async function getLimits(id: string) {
 	}
 
 	const { data, error } = await supabase
-		.schema("scripts")
-		.from("stats_limits")
+		.schema("stats")
+		.from("limits")
 		.select("xp_min, xp_max, gp_min, gp_max")
 		.eq("id", id)
 		.single()
@@ -94,7 +94,7 @@ async function getLimits(id: string) {
 async function updateScriptStats(id: string, payload: StatsPayload) {
 	const { data, error } = await supabase
 		.schema("stats")
-		.from("simba")
+		.from("values")
 		.select("experience, gold, runtime")
 		.eq("id", id)
 		.single()
@@ -110,7 +110,7 @@ async function updateScriptStats(id: string, payload: StatsPayload) {
 	data.gold += payload.gold
 	data.runtime += payload.runtime
 
-	const { error: err } = await supabaseAdmin.schema("stats").from("simba").update(data).eq("id", id)
+	const { error: err } = await supabaseAdmin.schema("stats").from("stats").update(data).eq("id", id)
 
 	if (err) {
 		console.error(err)
