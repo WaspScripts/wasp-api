@@ -18,11 +18,6 @@ app.onRequest(async ({ store, request, status }) => {
 		return
 	}
 
-	const apiKey = request.headers.get("apikey")
-	if (apiKey !== process.env.ANON_KEY) {
-		return status(401, "Invalid API key")
-	}
-
 	const authorization = request.headers.get("Authorization")
 	if (!authorization) {
 		return status(401, "Authorization header is missing.")
