@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 import { Database } from "./types/supabase"
 import { CachedLimits, StatsPayload } from "./types/collection"
 

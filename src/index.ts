@@ -1,4 +1,5 @@
 import { Elysia } from "elysia"
+import { cors } from "@elysiajs/cors"
 import { swagger } from "@elysiajs/swagger"
 import { serverTiming } from "@elysiajs/server-timing"
 import { autoroutes } from "elysia-autoroutes"
@@ -66,6 +67,8 @@ app.onAfterResponse((response) => {
 		`[${timestamp}]: [${set.status}] ${userAgent} ${ip ?? "NO_IP" + " "}- ${request.method} ${path}`
 	)
 })
+
+app.use(cors())
 
 app.use(ip({ headersOnly: true }))
 
