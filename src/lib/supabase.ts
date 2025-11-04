@@ -9,6 +9,33 @@ const supabaseAdmin = createClient<Database>(process.env.URL, process.env.SERVIC
 
 const limits: Map<string, CachedLimits> = new Map()
 
+export async function setSession(access_token: string, refresh_token: string) {
+	const {
+		data: { user, session },
+		error: err
+	} = await supabase.auth.setSession({ access_token, refresh_token })
+
+	if (err) {
+		return {
+			user: null,
+			email: null,
+			error: `AuthError Code: ${err.code} Name: ${err.name} Status: ${err.status} Message: ${err.message}`
+		}
+	}
+
+	if (!user || !session) return { email: null, error: "Invalid Session." }
+
+	if (!user.email) {
+		return {
+			user: null,
+			email: null,
+			error: "Your account needs an email tied to your account to submit stats"
+		}
+	}
+
+	return { user: user.id, email: user.email, error: null }
+}
+
 export async function createSession(email: string) {
 	const { data, error } = await supabaseAdmin.auth.admin.generateLink({
 		type: "magiclink",

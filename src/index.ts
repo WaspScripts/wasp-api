@@ -1,58 +1,15 @@
 import { Elysia } from "elysia"
 import { cors } from "@elysiajs/cors"
-import { swagger } from "@elysiajs/swagger"
 import { serverTiming } from "@elysiajs/server-timing"
-import { autoroutes } from "elysia-autoroutes"
 import { ip } from "elysia-ip"
-import { supabase } from "./lib/supabase"
+import openapi from "@elysiajs/openapi"
+import { autoload } from "elysia-autoload"
 export { t } from "elysia"
 export { rateLimit } from "elysia-rate-limit"
 
 console.log(`🔥 wasp-api is starting...`)
 
-const app = new Elysia().state("user", "").state("email", "")
-
-app.onRequest(async ({ store, request, status }) => {
-	const url = new URL(request.url)
-	const path = url.pathname
-	if (path === "/docs" || path === "/docs/" || path === "/docs/json" || path === "/docs/json/") {
-		return
-	}
-
-	const authorization = request.headers.get("Authorization")
-	if (!authorization) {
-		return status(401, "Authorization header is missing.")
-	}
-
-	const refresh_token = request.headers.get("RefreshToken")
-	if (!refresh_token) {
-		return status(401, "RefreshToken header is missing.")
-	}
-
-	const access_token = authorization.split("Bearer ")[1]
-
-	const {
-		data: { user, session },
-		error: err
-	} = await supabase.auth.setSession({ access_token, refresh_token })
-	if (err) {
-		return status(
-			401,
-			`AuthError Code: ${err.code} Name: ${err.name} Status: ${err.status} Message: ${err.message}`
-		)
-	}
-
-	if (!user || !session) {
-		return status(401, "Invalid Session.")
-	}
-
-	if (!user.email) {
-		return status(401, "Your account needs an email tied to your account to submit stats")
-	}
-
-	store.user = user.id
-	store.email = user.email
-})
+const app = new Elysia()
 
 app.onAfterResponse((response) => {
 	const { request, path, set } = response
@@ -72,28 +29,33 @@ app.use(cors())
 
 app.use(ip({ headersOnly: true }))
 
-app.use(autoroutes())
-
 app.use(
-	swagger({
+	openapi({
 		documentation: {
 			info: {
-				title: "Wasp API Documentation",
+				title: "WaspScripts API Documentation",
 				version: "2.0.0",
-				description: "Documentation on the wapscripts.com API project",
+				description: "Documentation on the wapscripts.dev API project",
 				contact: {
-					email: "support@waspscripts.com",
+					email: "support@waspscripts.dev",
 					name: "Torwent",
 					url: "https://waspscripts.dev"
 				},
 				license: { name: "GPLv3", url: "https://github.com/WaspScripts/wasp-api/LICENSE" }
 			}
 		},
-		scalarConfig: { spec: { url: "/docs/json" } },
-		path: "/docs",
-		exclude: ["/docs", "/docs/json"]
+		path: "/docs"
+		//exclude: ["/docs", "/docs/json"]
 	})
 )
+
+app.use(
+	await autoload({
+		dir: "./routes",
+		ignore: ["**/*.test.ts", "**/*.spec.ts"]
+	})
+)
+
 app.use(serverTiming())
 
 app.listen({
