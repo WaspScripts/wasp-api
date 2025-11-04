@@ -2,12 +2,12 @@ import { ElysiaApp, rateLimit, t } from "$src/index"
 import { createSession, setSession } from "$src/lib/supabase"
 
 const headers = t.Object({
-	Authorization: t.String({
+	authorization: t.String({
 		description: "Authorization token",
 		examples: "Bearer abcdef012345...",
 		error: "Authorization header is missing."
 	}),
-	RefreshToken: t.String({
+	refreshtoken: t.String({
 		description: "Refresh session token",
 		examples: "a24shj127gfi",
 		error: "RefreshToken header is missing."
@@ -29,10 +29,11 @@ export default (app: ElysiaApp) =>
 		.get(
 			"",
 			async ({ headers, status }) => {
-				const { Authorization, RefreshToken } = headers
-				const access_token = Authorization.split("Bearer ")[1]
+				const { authorization, refreshtoken } = headers
+				const access_token = authorization.split("Bearer ")[1]
 
-				const { email, error } = await setSession(access_token, RefreshToken)
+				console.log(access_token)
+				const { email, error } = await setSession(access_token, refreshtoken)
 				if (error != null) return status(401, error)
 
 				const { session, error: err } = await createSession(email)
