@@ -7,7 +7,7 @@
 		"gentypes": "bun run src/lib/types/update.ts",
 		"dev": "bun run --watch src/index.ts",
 		"build": "bun build src/index.ts --outdir build --target=bun",
-		"start": "NODE_ENV=production bun src/index.ts"
+		"start": "NODE_ENV=production bun run build/index.js"
 	},
 	"dependencies": {
 		"@elysiajs/cors": "^1.4.0",
