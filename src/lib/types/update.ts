@@ -16,14 +16,14 @@ try {
 }
 
 try {
+	const authorization = Buffer.from(
+		`${process.env.BASIC_AUTH_USER}:${process.env.BASIC_AUTH_PASS}`
+	).toString("base64")
+
 	const response = await fetch(url, {
 		headers: {
 			accept: "application/json",
-			authorization:
-				"Basic " +
-				Buffer.from(`${process.env.BASIC_AUTH_USER}:${process.env.BASIC_AUTH_PASS}`).toString(
-					"base64"
-				)
+			authorization: "Basic " + authorization
 		}
 	})
 
@@ -32,8 +32,8 @@ try {
 	}
 
 	const json = await response.json()
-	const tsCode = json.types
-	await writeFile(outputPath, tsCode)
+
+	await writeFile(outputPath, json.toString())
 
 	console.log(`Types file updated!`)
 } catch (err) {

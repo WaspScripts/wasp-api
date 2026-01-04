@@ -136,6 +136,37 @@ export type Database = {
   }
   profiles: {
     Tables: {
+      balances: {
+        Row: {
+          balance: number
+          id: string
+          stripe: string
+        }
+        Insert: {
+          balance?: number
+          id?: string
+          stripe: string
+        }
+        Update: {
+          balance?: number
+          id?: string
+          stripe?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balances_id_fkey"
+            columns: ["id"]
+            referencedRelation: "random_scripters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "balances_id_fkey"
+            columns: ["id"]
+            referencedRelation: "scripters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       free_access: {
         Row: {
           date_end: string
@@ -234,7 +265,7 @@ export type Database = {
           id: string
           paypal?: string | null
           realname?: string | null
-          stripe: string
+          stripe?: string
           url?: string
         }
         Update: {
@@ -344,6 +375,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: string
       }
+      get_roles_enum: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       get_username: {
         Args: { userid: string }
         Returns: string
@@ -357,6 +392,13 @@ export type Database = {
             }
         Returns: boolean
       }
+      min_role: {
+        Args: {
+          user_id: string
+          target_role: Database["profiles"]["Enums"]["roles"]
+        }
+        Returns: boolean
+      }
       uid: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -365,7 +407,7 @@ export type Database = {
     Enums: {
       roles:
         | "premium"
-        | "vip"
+        | "contributor"
         | "tester"
         | "scripter"
         | "moderator"
@@ -467,6 +509,21 @@ export type Database = {
           },
         ]
       }
+      plugins: {
+        Row: {
+          created_at: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       protected: {
         Row: {
           author: string
@@ -548,18 +605,21 @@ export type Database = {
       }
       versions: {
         Row: {
+          files: string[]
           id: string
           revision: number
           simba: string
           wasplib: string
         }
         Insert: {
+          files?: string[]
           id?: string
           revision: number
           simba?: string
           wasplib?: string
         }
         Update: {
+          files?: string[]
           id?: string
           revision?: number
           simba?: string
@@ -1705,7 +1765,7 @@ export const Constants = {
     Enums: {
       roles: [
         "premium",
-        "vip",
+        "contributor",
         "tester",
         "scripter",
         "moderator",
