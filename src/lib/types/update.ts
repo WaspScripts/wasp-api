@@ -32,7 +32,6 @@ try {
 	}
 
 	const json = await response.json()
-
 	await writeFile(outputPath, json.toString())
 
 	console.log(`Types file updated!`)
