@@ -137,7 +137,11 @@ async function updateScriptStats(id: string, payload: StatsPayload) {
 	data.gold += payload.gold
 	data.runtime += payload.runtime
 
-	const { error: err } = await supabaseAdmin.schema("stats").from("stats").update(data).eq("id", id)
+	const { error: err } = await supabaseAdmin
+		.schema("stats")
+		.from("values")
+		.update(data)
+		.eq("id", id)
 
 	if (err) {
 		console.error(err)
