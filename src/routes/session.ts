@@ -32,7 +32,6 @@ export default (app: ElysiaApp) =>
 				const { authorization, refreshtoken } = headers
 				const access_token = authorization.split("Bearer ")[1]
 
-				console.log(access_token)
 				const { email, error } = await setSession(access_token, refreshtoken)
 				if (error != null) return status(401, error)
 
