@@ -11,12 +11,12 @@ const uuid = t.Object({
 	})
 })
 const headers = t.Object({
-	Authorization: t.String({
+	authorization: t.String({
 		description: "Authorization token",
 		examples: "Bearer abcdef012345...",
 		error: "Authorization header is missing."
 	}),
-	RefreshToken: t.String({
+	refreshtoken: t.String({
 		description: "Refresh session token",
 		examples: "a24shj127gfi",
 		error: "RefreshToken header is missing."
@@ -39,10 +39,10 @@ export default (app: ElysiaApp) =>
 		.post(
 			":id",
 			async ({ headers, params: { id }, body, status }) => {
-				const { Authorization, RefreshToken } = headers
-				const access_token = Authorization.split("Bearer ")[1]
+				const { authorization, refreshtoken } = headers
+				const access_token = authorization.split("Bearer ")[1]
 
-				const { user, error } = await setSession(access_token, RefreshToken)
+				const { user, error } = await setSession(access_token, refreshtoken)
 				if (error != null) return status(401, error)
 
 				const { error: err } = await upsertStats(id, user, body)
