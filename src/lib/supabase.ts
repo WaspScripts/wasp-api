@@ -198,7 +198,17 @@ export async function upsertStats(id: string, user_id: string, payload: StatsPay
 		config: { presence: { key: user_id, enabled: true } }
 	})
 
-	scriptPresence.subscribe()
+	const userStatus = {
+		user: user_id,
+		online_at: new Date().toISOString()
+	}
+
+	scriptPresence.subscribe(async (status) => {
+		if (status !== "SUBSCRIBED") {
+			return
+		}
+		await scriptPresence.track(userStatus)
+	})
 
 	if (payload.experience < limits.xp_min) {
 		return { error: "Reported experience is less than the script aproved limits!" }
@@ -228,11 +238,12 @@ export async function upsertStats(id: string, user_id: string, payload: StatsPay
 	const submissions = await Promise.all([
 		updateScriptStats(id, payload),
 		upsertUserStats(user_id, payload),
-		scriptPresence.unsubscribe()
+		scriptPresence.untrack()
 	])
 
 	if (submissions[0].error) return { error: submissions[0].error }
 	if (submissions[1].error) return { error: submissions[1].error }
+	await scriptPresence.unsubscribe()
 
 	return { error: null }
 }
