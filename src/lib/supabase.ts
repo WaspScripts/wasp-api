@@ -186,29 +186,38 @@ async function upsertUserStats(user_id: string, payload: StatsPayload) {
 	return { error: null }
 }
 
+async function update_online_status(id: string, user_id: string) {
+	const { error } = await supabase.schema("stats").from("online").upsert({
+		script_id: id,
+		user_id: user_id,
+		last_seen: new Date().toISOString()
+	})
+
+	if (error) {
+		console.error(error)
+		return {
+			error: `PostgrestError Code: ${error.code} Name: ${error.name} Status: ${error.hint} Details: ${error.details} Message: ${error.message}`
+		}
+	}
+
+	return { error: null }
+}
+
 export async function upsertStats(id: string, user_id: string, payload: StatsPayload) {
-	const promises = await Promise.all([getAccess(id), getLimits(id)])
-	const { error: err } = promises[0]
-	if (err != null) return { error: err }
+	const promises = await Promise.all([
+		getAccess(id),
+		getLimits(id),
+		update_online_status(id, user_id)
+	])
+
+	const { error: errAccess } = promises[0]
+	if (errAccess != null) return { error: errAccess }
 
 	const { limits, error } = promises[1]
 	if (error != null) return { error }
 
-	const scriptPresence = supabase.channel(id, {
-		config: { presence: { key: user_id, enabled: true } }
-	})
-
-	const userStatus = {
-		user: user_id,
-		online_at: new Date().toISOString()
-	}
-
-	scriptPresence.subscribe(async (status) => {
-		if (status !== "SUBSCRIBED") {
-			return
-		}
-		await scriptPresence.track(userStatus)
-	})
+	const { error: errOnline } = promises[2]
+	if (errOnline != null) return { error: errOnline }
 
 	if (payload.experience < limits.xp_min) {
 		return { error: "Reported experience is less than the script aproved limits!" }
@@ -237,13 +246,11 @@ export async function upsertStats(id: string, user_id: string, payload: StatsPay
 
 	const submissions = await Promise.all([
 		updateScriptStats(id, payload),
-		upsertUserStats(user_id, payload),
-		scriptPresence.untrack()
+		upsertUserStats(user_id, payload)
 	])
 
 	if (submissions[0].error) return { error: submissions[0].error }
 	if (submissions[1].error) return { error: submissions[1].error }
-	await scriptPresence.unsubscribe()
 
 	return { error: null }
 }
