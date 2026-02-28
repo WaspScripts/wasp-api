@@ -210,38 +210,38 @@ export async function upsertStats(id: string, user_id: string, payload: StatsPay
 		update_online_status(id, user_id)
 	])
 
-	const { error: errAccess } = promises[0]
-	if (errAccess != null) return { error: errAccess }
+	const { limits, error: errLimits } = promises[1]
+	if (errLimits != null) return { code: 404, error: errLimits }
 
-	const { limits, error } = promises[1]
-	if (error != null) return { error }
+	const { error: errAccess } = promises[0]
+	if (errAccess != null) return { code: 403, error: errAccess }
 
 	const { error: errOnline } = promises[2]
-	if (errOnline != null) return { error: errOnline }
+	if (errOnline != null) return { code: 502, error: errOnline }
 
 	if (payload.experience < limits.xp_min) {
-		return { error: "Reported experience is less than the script aproved limits!" }
+		return { code: 406, error: "Reported experience is less than the script aproved limits!" }
 	}
 
 	if (payload.experience > limits.xp_max) {
-		return { error: "Reported experience is more than the script aproved limits!" }
+		return { code: 406, error: "Reported experience is more than the script aproved limits!" }
 	}
 
 	if (payload.gold < limits.gp_min) {
-		return { error: "Reported gold is less than the script aproved limits!" }
+		return { code: 406, error: "Reported gold is less than the script aproved limits!" }
 	}
 
 	if (payload.gold > limits.gp_max) {
-		return { error: "Reported gold is more than the script aproved limits!" }
+		return { code: 406, error: "Reported gold is more than the script aproved limits!" }
 	}
 
 	if (payload.runtime === 0) payload.runtime = 5000
 	if (payload.runtime < 1000 || payload.runtime > 15 * 60 * 1000) {
-		return { error: "Reported runtime is not within the aproved limits!" }
+		return { code: 406, error: "Reported runtime is not within the aproved limits!" }
 	}
 
 	if (payload.experience === 0 && payload.gold === 0) {
-		return { error: "No experience nor gold was reported!" }
+		return { code: 406, error: "No experience nor gold was reported!" }
 	}
 
 	const submissions = await Promise.all([
@@ -249,8 +249,12 @@ export async function upsertStats(id: string, user_id: string, payload: StatsPay
 		upsertUserStats(user_id, payload)
 	])
 
-	if (submissions[0].error) return { error: submissions[0].error }
-	if (submissions[1].error) return { error: submissions[1].error }
+	if (submissions[0].error && submissions[1].error) {
+		return { code: 514, error: submissions[0].error + "\n\n" + submissions[1].error }
+	}
 
-	return { error: null }
+	if (submissions[0].error) return { code: 512, error: submissions[0].error }
+	if (submissions[1].error) return { code: 513, error: submissions[1].error }
+
+	return { code: 200, error: null }
 }

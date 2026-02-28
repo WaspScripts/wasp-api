@@ -45,8 +45,8 @@ export default (app: ElysiaApp) =>
 				const { user, error } = await setSession(access_token, refreshtoken)
 				if (error != null) return status(401, error)
 
-				const { error: err } = await upsertStats(id, user, body)
-				if (err) return status(400, err)
+				const { code, error: err } = await upsertStats(id, user, body)
+				if (err) return status(code, err)
 
 				return "User and script stats were successfully updated!"
 			},
@@ -69,8 +69,34 @@ export default (app: ElysiaApp) =>
 								}
 							}
 						},
-						400: {
-							description: "Failed to create session"
+						401: {
+							description: "Authorization and/or RefreshToken headers are invalid."
+						},
+						403: {
+							description: "You are not allowed to submit stats to this script."
+						},
+						404: {
+							description: "The script you want to submit stats to doesn't exist."
+						},
+						406: {
+							description:
+								"The data stats you reported are not within the script acceptable limits."
+						},
+						429: {
+							description: "You are rate limited."
+						},
+						502: {
+							description: "The server failed to update your online status."
+						},
+						512: {
+							description: "The server failed to update the script stats."
+						},
+						513: {
+							description: "The server failed to update your stats."
+						},
+
+						514: {
+							description: "The server failed to update both your stats and the script stats."
 						}
 					}
 				}

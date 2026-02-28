@@ -36,7 +36,7 @@ export default (app: ElysiaApp) =>
 				if (error != null) return status(401, error)
 
 				const { session, error: err } = await createSession(email)
-				if (err != null) return status(400, error)
+				if (err != null) return status(403, error)
 
 				return { access_token: session.access_token, refresh_token: session.refresh_token }
 			},
@@ -60,8 +60,14 @@ export default (app: ElysiaApp) =>
 								}
 							}
 						},
-						400: {
-							description: "Failed to create session"
+						401: {
+							description: "Authorization and/or RefreshToken headers are invalid."
+						},
+						403: {
+							description: "Failed to create new session."
+						},
+						429: {
+							description: "You are rate limited."
 						}
 					}
 				}
