@@ -187,7 +187,7 @@ async function upsertUserStats(user_id: string, payload: StatsPayload) {
 }
 
 async function update_online_status(id: string, user_id: string) {
-	const { error } = await supabase.schema("stats").from("online").upsert({
+	const { error } = await supabaseAdmin.schema("stats").from("online").upsert({
 		script_id: id,
 		user_id: user_id,
 		last_seen: new Date().toISOString()
@@ -210,11 +210,11 @@ export async function upsertStats(id: string, user_id: string, payload: StatsPay
 		update_online_status(id, user_id)
 	])
 
-	const { limits, error: errLimits } = promises[1]
-	if (errLimits != null) return { code: 404, error: errLimits }
-
 	const { error: errAccess } = promises[0]
 	if (errAccess != null) return { code: 403, error: errAccess }
+
+	const { limits, error: errLimits } = promises[1]
+	if (errLimits != null) return { code: 404, error: errLimits }
 
 	const { error: errOnline } = promises[2]
 	if (errOnline != null) return { code: 502, error: errOnline }
