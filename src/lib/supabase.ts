@@ -206,18 +206,20 @@ async function update_online_status(id: string, user_id: string) {
 export async function upsertStats(id: string, user_id: string, payload: StatsPayload) {
 	const promises = await Promise.all([
 		getAccess(id),
-		getLimits(id),
-		update_online_status(id, user_id)
+		update_online_status(id, user_id),
+		getLimits(id)
 	])
 
 	const { error: errAccess } = promises[0]
 	if (errAccess != null) return { code: 403, error: errAccess }
 
-	const { limits, error: errLimits } = promises[1]
+	const { error: errOnline } = promises[1]
+	if (errOnline != null) return { code: 502, error: errOnline }
+
+	const { limits, error: errLimits } = promises[2]
 	if (errLimits != null) return { code: 404, error: errLimits }
 
-	const { error: errOnline } = promises[2]
-	if (errOnline != null) return { code: 502, error: errOnline }
+	console.log("Payload: ", payload)
 
 	if (payload.experience < limits.xp_min) {
 		return { code: 406, error: "Reported experience is less than the script aproved limits!" }
