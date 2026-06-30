@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
-import { Database } from "./types/supabase"
+import type { Database } from "./types/supabase"
 import { CachedLimits, StatsPayload } from "./types/collection"
 
 export const CACHE_TIMEOUT = 2 * 60 * 1000
