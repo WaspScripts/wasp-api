@@ -1,5 +1,6 @@
 import { ElysiaApp, rateLimit, t } from "$src/index"
 import { createSession, setSession } from "$src/lib/supabase"
+import { getClientIP } from "$lib/request"
 
 const headers = t.Object({
 	authorization: t.String({
@@ -21,8 +22,8 @@ export default (app: ElysiaApp) =>
 				scoping: "scoped",
 				duration: 3 * 60 * 1000,
 				max: 3,
-				errorResponse: "You've reached the 3 requests/min limit.",
-				generator: async (req, server, { ip }) => Bun.hash(JSON.stringify(ip)).toString(),
+				errorResponse: "You've reached the 3 requests per 3 minutes limit.",
+				generator: (req, server) => getClientIP(req, server),
 				injectServer: () => app.server
 			})
 		)
@@ -36,7 +37,7 @@ export default (app: ElysiaApp) =>
 				if (error != null) return status(401, error)
 
 				const { session, error: err } = await createSession(email)
-				if (err != null) return status(403, error)
+				if (err != null) return status(403, err)
 
 				return { access_token: session.access_token, refresh_token: session.refresh_token }
 			},
@@ -64,7 +65,8 @@ export default (app: ElysiaApp) =>
 							description: "Authorization and/or RefreshToken headers are invalid."
 						},
 						403: {
-							description: "Failed to create new session."
+							description:
+								"Failed to create new session. The message includes a ref ID to report to support."
 						},
 						429: {
 							description: "You are rate limited."

@@ -1,4 +1,5 @@
-import { ElysiaApp, rateLimit, t } from "$src/index"
+import { ElysiaApp, rateLimit } from "$src/index"
+import { getClientIP } from "$lib/request"
 
 export default (app: ElysiaApp) =>
 	app
@@ -7,8 +8,8 @@ export default (app: ElysiaApp) =>
 				scoping: "scoped",
 				duration: 3 * 60 * 1000,
 				max: 300,
-				errorResponse: "You've reached the 300 requests/min limit.",
-				generator: async (req, server, { ip }) => Bun.hash(JSON.stringify(ip)).toString(),
+				errorResponse: "You've reached the 300 requests per 3 minutes limit.",
+				generator: (req, server) => getClientIP(req, server),
 				injectServer: () => app.server
 			})
 		)

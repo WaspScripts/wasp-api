@@ -3,7 +3,8 @@ import { writeFile } from "fs/promises"
 import { join } from "path"
 
 const url =
-	"https://db.waspscripts.dev/api/v1/projects/default/types/typescript?included_schemas=public%2C%20storage"
+	process.env.SUPABASE_URL +
+	"/api/v1/projects/default/types/typescript?included_schemas=public%2C%20storage"
 const outputPath = join(__dirname, "supabase.ts")
 
 console.log(outputPath)
@@ -16,14 +17,14 @@ try {
 }
 
 try {
-	const authorization = Buffer.from(
-		`${process.env.BASIC_AUTH_USER}:${process.env.BASIC_AUTH_PASS}`
-	).toString("base64")
-
 	const response = await fetch(url, {
 		headers: {
 			accept: "application/json",
-			authorization: "Basic " + authorization
+			authorization:
+				"Basic " +
+				Buffer.from(`${process.env.BASIC_AUTH_USER}:${process.env.BASIC_AUTH_PASS}`).toString(
+					"base64"
+				)
 		}
 	})
 
@@ -32,7 +33,8 @@ try {
 	}
 
 	const json = await response.json()
-	await writeFile(outputPath, json.toString())
+	const tsCode = json.types
+	await writeFile(outputPath, tsCode)
 
 	console.log(`Types file updated!`)
 } catch (err) {
