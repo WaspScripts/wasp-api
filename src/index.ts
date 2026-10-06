@@ -31,7 +31,7 @@ app.use(
 			info: {
 				title: "WaspScripts API Documentation",
 				version: "2.0.0",
-				description: `Documentation for the [waspscripts.dev](https://waspscripts.dev) API.
+				description: `Documentation for the [waspscripts.com](https://waspscripts.com) API.
 
 ## Authentication
 Authenticated endpoints need two headers from a WaspScripts (Supabase) session:
@@ -50,9 +50,9 @@ Errors return a plain text message. Server errors include a \`(ref: xxxxxxxx)\` 
 Include that ID when you report the issue to support.
 Requests with missing or invalid headers, params or body return \`422\`.`,
 				contact: {
-					email: "support@waspscripts.dev",
+					email: "support@waspscripts.com",
 					name: "Torwent",
-					url: "https://waspscripts.dev"
+					url: "https://waspscripts.com"
 				},
 				license: {
 					name: "GPLv3",
