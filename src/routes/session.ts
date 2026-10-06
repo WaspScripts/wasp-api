@@ -44,7 +44,14 @@ export default (app: ElysiaApp) =>
 			{
 				headers,
 				detail: {
-					description: `Creates a new WaspScripts session.`,
+					tags: ["Session"],
+					summary: "Create session",
+					security: [{ bearerAuth: [] }],
+					description: `Creates a new WaspScripts session from an existing valid one.
+The new session is independent of the one used to authenticate, so a script or client can keep its own session.
+Your account must have an email address tied to it.
+
+Rate limit: 3 requests per 3 minutes per IP.`,
 					responses: {
 						200: {
 							description: "Session created successfully",
@@ -62,11 +69,15 @@ export default (app: ElysiaApp) =>
 							}
 						},
 						401: {
-							description: "Authorization and/or RefreshToken headers are invalid."
+							description:
+								"Authorization and/or RefreshToken headers are invalid or expired, or your account has no email."
 						},
 						403: {
 							description:
 								"Failed to create new session. The message includes a ref ID to report to support."
+						},
+						422: {
+							description: "Authorization and/or RefreshToken headers are missing."
 						},
 						429: {
 							description: "You are rate limited."

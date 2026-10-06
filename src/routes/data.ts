@@ -21,21 +21,25 @@ export default (app: ElysiaApp) =>
 			},
 			{
 				detail: {
-					description: "...",
+					tags: ["Data"],
+					summary: "Script data",
+					description:
+						"Returns data for the script with the given ID. Work in progress: currently returns a placeholder. Rate limit: 300 requests per 3 minutes per IP.",
 					responses: {
 						200: {
-							description: "User and script stats were successfully updated!",
+							description: "Script data",
 							content: {
 								"application/json": {
 									schema: {
-										type: "string",
-										example: "User and script stats were successfully updated!"
+										type: "object",
+										properties: { versions: { type: "string" } },
+										example: { versions: "1" }
 									}
 								}
 							}
 						},
-						400: {
-							description: "Failed to create session"
+						429: {
+							description: "You are rate limited."
 						}
 					}
 				}

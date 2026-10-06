@@ -31,13 +31,48 @@ app.use(
 			info: {
 				title: "WaspScripts API Documentation",
 				version: "2.0.0",
-				description: "Documentation on the wapscripts.dev API project",
+				description: `Documentation for the [waspscripts.dev](https://waspscripts.dev) API.
+
+## Authentication
+Authenticated endpoints need two headers from a WaspScripts (Supabase) session:
+- \`Authorization: Bearer <access_token>\`
+- \`RefreshToken: <refresh_token>\`
+
+Your account must have an email address tied to it.
+
+## Rate limits
+Rate limits apply per IP and differ per endpoint (see each endpoint).
+Responses include \`RateLimit-Limit\`, \`RateLimit-Remaining\` and \`RateLimit-Reset\` headers.
+When you're rate limited, you get a \`429\` with a \`Retry-After\` header (seconds).
+
+## Errors
+Errors return a plain text message. Server errors include a \`(ref: xxxxxxxx)\` ID.
+Include that ID when you report the issue to support.
+Requests with missing or invalid headers, params or body return \`422\`.`,
 				contact: {
 					email: "support@waspscripts.dev",
 					name: "Torwent",
 					url: "https://waspscripts.dev"
 				},
-				license: { name: "GPLv3", url: "https://github.com/WaspScripts/wasp-api/LICENSE" }
+				license: {
+					name: "GPLv3",
+					url: "https://github.com/WaspScripts/wasp-api/blob/main/LICENSE"
+				}
+			},
+			tags: [
+				{ name: "General", description: "Public API information" },
+				{ name: "Session", description: "WaspScripts session management" },
+				{ name: "Stats", description: "Script and user stats submission" },
+				{ name: "Data", description: "Script data" }
+			],
+			components: {
+				securitySchemes: {
+					bearerAuth: {
+						type: "http",
+						scheme: "bearer",
+						description: "Supabase access token of your WaspScripts session."
+					}
+				}
 			}
 		},
 		path: "/docs"

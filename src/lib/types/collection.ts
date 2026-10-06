@@ -10,9 +10,14 @@ export interface Limits {
 }
 
 export const StatsSchema = t.Object({
-	experience: t.Number({ minimum: 0 }),
-	gold: t.Number(),
-	runtime: t.Number({ minimum: 0, maximum: 15 * 60 * 1000 })
+	experience: t.Number({ minimum: 0, description: "Experience gained", examples: [1500] }),
+	gold: t.Number({ description: "Gold gained, can be negative", examples: [25000] }),
+	runtime: t.Number({
+		minimum: 0,
+		maximum: 15 * 60 * 1000,
+		description: "Runtime gained, in milliseconds",
+		examples: [300000]
+	})
 })
 
 export type StatsPayload = Static<typeof StatsSchema>

@@ -65,13 +65,21 @@ export default (app: ElysiaApp) =>
 				params: uuid,
 				body: StatsSchema,
 				detail: {
-					description:
-						"Send your stats. This will update both the user personal stats and the script stats.",
+					tags: ["Stats"],
+					summary: "Submit stats",
+					security: [{ bearerAuth: [] }],
+					description: `Send your stats. This will update both the user personal stats and the script stats, and mark you as online for the script.
+
+You must have access to the script. The reported values must be within the script approved limits:
+- \`experience\` and \`gold\` must be within the script minimum and maximum. At least one of them must be non-zero.
+- \`runtime\` must be between 1 second and 15 minutes. A \`runtime\` of \`0\` counts as 5 seconds.
+
+Rate limits: 30 requests per 3 minutes per IP, and 3 submissions per 3 minutes per user per script.`,
 					responses: {
 						200: {
 							description: "User and script stats were successfully updated!",
 							content: {
-								"application/json": {
+								"text/plain": {
 									schema: {
 										type: "string",
 										example: "User and script stats were successfully updated!"
@@ -80,17 +88,22 @@ export default (app: ElysiaApp) =>
 							}
 						},
 						401: {
-							description: "Authorization and/or RefreshToken headers are invalid."
+							description:
+								"Authorization and/or RefreshToken headers are invalid or expired, or your account has no email."
 						},
 						403: {
-							description: "You are not allowed to submit stats to this script."
+							description: "You don't have access to this script."
 						},
 						404: {
-							description: "The script you want to submit stats to doesn't exist."
+							description: "The script doesn't exist or doesn't accept stats yet."
 						},
 						406: {
 							description:
-								"The data stats you reported are not within the script acceptable limits."
+								"The stats you reported are not within the script approved limits, or both experience and gold are 0."
+						},
+						422: {
+							description:
+								"Missing headers, invalid script UUID, or the body doesn't match the schema."
 						},
 						429: {
 							description:
